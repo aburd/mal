@@ -1,0 +1,10 @@
+[package]
+name = "aburd-rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+
+[[bin]]
+name = "step0_repl"
+path = "src/bin/step0_repl.rs"

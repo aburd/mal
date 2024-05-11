@@ -22,3 +22,6 @@ GRTAGS
 logs
 old
 tmp/
+debug
+.rustc_info.json
+target
