@@ -1,3 +1,4 @@
+use mal::read;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Result};
 
@@ -14,7 +15,12 @@ fn main() -> Result<()> {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                println!("{}", line);
+                match read::read_str(&line) {
+                    Ok(m_type) => {
+                        println!("{}", m_type.to_string());
+                    }
+                    Err(e) => eprintln!("Error: {}", e),
+                }
             }
             Err(ReadlineError::Interrupted) => {
                 println!("CTRL-C");

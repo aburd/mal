@@ -1,6 +1,6 @@
-step0_repl: clean
+step0_repl step1_read_print: clean
 	cargo build --bin "${@}"
 	cp "target/debug/${@}" "${@}"
 
 clean:
-	rm step*
+	rm -f step*

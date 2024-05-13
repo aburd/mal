@@ -1,11 +1,20 @@
 [package]
-name = "aburd-rust"
+name = "mal"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+regex = "1.10.4"
 rustyline = "14.0.0"
+
+[lib]
+name = "mal"
+path = "src/lib/mod.rs"
 
 [[bin]]
 name = "step0_repl"
 path = "src/bin/step0_repl.rs"
+
+[[bin]]
+name = "step1_read_print"
+path = "src/bin/step1_read_print.rs"
