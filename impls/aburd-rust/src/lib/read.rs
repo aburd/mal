@@ -1,12 +1,13 @@
 use std::fmt::Display;
 
-use crate::{MalDataType, MalToken};
+use crate::{environment::MalEnvironment, MalDataType, MalToken};
 use regex::Regex;
 
 #[derive(Debug)]
 pub enum MalReaderError {
     LexingFailure(String),
     IllegalToken(String),
+    IllegalString(String),
     IllegalSymbol(String),
     UnterminatedList,
 }
@@ -80,7 +81,13 @@ impl MalToken {
             s if s.chars().all(|c| c.is_digit(10)) => Ok(MalToken::Data(MalDataType::Int(
                 s.parse::<usize>().unwrap(),
             ))),
-            s if s.starts_with("\"") => Ok(MalToken::Data(MalDataType::String(s.to_string()))),
+            s if s.starts_with("\"") => {
+                if s.len() < 2 || !s.ends_with("\"") {
+                    return Err(MalReaderError::IllegalString(s.to_owned()));
+                }
+
+                Ok(MalToken::Data(MalDataType::String(s.to_string())))
+            }
             _ => {
                 // Symbols must not contain certain characters
                 if s.contains("\"") {
@@ -97,14 +104,14 @@ impl MalToken {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 struct Reader {
     tokens: Vec<MalToken>,
     pos: usize,
 }
 
 impl Reader {
-    fn new(tokens: Vec<MalToken>) -> Self {
+    fn new<'a>(tokens: Vec<MalToken>) -> Self {
         Reader { tokens, pos: 0 }
     }
 }
@@ -190,7 +197,7 @@ fn tokenize(lexemes: &[&str]) -> MalReaderResult<Vec<MalToken>> {
     Ok(tokens)
 }
 
-pub fn read_str(s: &str) -> MalReaderResult<MalDataType> {
+pub fn read_str(s: &str, mal_env: &MalEnvironment) -> MalReaderResult<MalDataType> {
     let lexemes = lexer(s)?;
     println!("lexemes: {:?}", lexemes);
     let tokens = tokenize(&lexemes)?;
@@ -219,7 +226,8 @@ mod tests {
 
     #[test]
     fn can_get_mal_tokens() -> MalReaderResult<()> {
-        let mal_list = read_str("(+ 2 3 nil false)")?;
+        let mal = MalEnvironment::new();
+        let mal_list = read_str("(+ 2 3 nil false)", &mal)?;
         assert_eq!(
             mal_list,
             MalDataType::List(vec![
@@ -236,7 +244,8 @@ mod tests {
 
     #[test]
     fn can_render_s() -> MalReaderResult<()> {
-        let mal_list = read_str(" ( + 2   3 )  ")?;
+        let mal = MalEnvironment::new();
+        let mal_list = read_str(" ( + 2   3 )  ", &mal)?;
         assert_eq!(mal_list.to_string(), "(+ 2 3)".to_owned());
         Ok(())
     }

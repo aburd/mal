@@ -1,3 +1,4 @@
+pub mod environment;
 pub mod read;
 
 #[derive(Debug, PartialEq, Clone)]

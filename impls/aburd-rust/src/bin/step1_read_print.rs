@@ -1,3 +1,4 @@
+use mal::environment::MalEnvironment;
 use mal::read;
 use rustyline::error::ReadlineError;
 use rustyline::{DefaultEditor, Result};
@@ -5,6 +6,7 @@ use rustyline::{DefaultEditor, Result};
 fn main() -> Result<()> {
     // `()` can be used when no completer is required
     let mut rl = DefaultEditor::new()?;
+    let mut mal_env = MalEnvironment::new();
     #[cfg(feature = "with-file-history")]
     if rl.load_history("history.txt").is_err() {
         println!("No previous history.");
@@ -15,11 +17,11 @@ fn main() -> Result<()> {
         match readline {
             Ok(line) => {
                 rl.add_history_entry(line.as_str())?;
-                match read::read_str(&line) {
+                match read::read_str(&line, &mal_env) {
                     Ok(m_type) => {
                         println!("{}", m_type.to_string());
                     }
-                    Err(e) => eprintln!("Error: {}", e),
+                    Err(e) => eprintln!("unbalanced"),
                 }
             }
             Err(ReadlineError::Interrupted) => {
