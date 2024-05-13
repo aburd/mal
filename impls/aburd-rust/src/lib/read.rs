@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use crate::{environment::MalEnvironment, MalDataType, MalToken};
 use regex::Regex;
@@ -197,11 +197,48 @@ fn tokenize(lexemes: &[&str]) -> MalReaderResult<Vec<MalToken>> {
     Ok(tokens)
 }
 
-pub fn read_str(s: &str, mal_env: &MalEnvironment) -> MalReaderResult<MalDataType> {
+fn apply_reader_macros(tokens: Vec<MalToken>) -> MalReaderResult<Vec<MalToken>> {
+    let mut transformed = vec![];
+    let len = tokens.len();
+    let mut i = 0;
+
+    loop {
+        if i >= len {
+            break;
+        }
+
+        let t = tokens.get(i).unwrap();
+        if let MalToken::Data(MalDataType::Symbol(s)) = t {
+            if s == "@" {
+                let next_t = tokens.get(i + 1).ok_or_else(|| {
+                    MalReaderError::LexingFailure(
+                        "@ reader macro improperly used, not followed by symbol".to_string(),
+                    )
+                })?;
+                transformed.extend_from_slice(&[
+                    MalToken::OpenParen,
+                    MalToken::Data(MalDataType::Symbol("deref".to_owned())),
+                    next_t.clone(),
+                    MalToken::CloseParen,
+                ]);
+                i += 2;
+                continue;
+            }
+        }
+
+        transformed.push(t.clone());
+        i += 1;
+    }
+
+    Ok(transformed)
+}
+
+pub fn read_str(s: &str, _mal_env: &MalEnvironment) -> MalReaderResult<MalDataType> {
     let lexemes = lexer(s)?;
-    println!("lexemes: {:?}", lexemes);
+    // println!("lexemes: {:?}", lexemes);
     let tokens = tokenize(&lexemes)?;
-    println!("tokens: {:?}", tokens);
+    let tokens = apply_reader_macros(tokens)?;
+    // println!("tokens: {:?}", tokens);
     let mut reader = Reader::new(tokens);
 
     match reader.read_form()? {
